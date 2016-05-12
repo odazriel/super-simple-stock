@@ -29,3 +29,7 @@ Design:
 14. I used a HashMap to hold all the stocks where their symbol is the key, since a common usage is to get a stock by its symbol.
 15. The StockTradeHistory keeps all the trades in a sorted linked list. A linked list because at any given time another trade can be inserted anywhere in the list, and sorted because it's usage is to go over the latest trades. This has a performance hit on each insert, but retrieving the latest trades will only iterate through the relevant entries.
 16. Assuming most trade data is added by order, then the insert operation to the sorted list is O(1) in the average case, since it is added to the head of the list.
+
+A word on documentation:
+1. I believe a well documented code is one where the classe, method and variable names are self explanatory. That the code in each class or method is short enough that the name is enough to understand what it is and what it does. 
+2. The code follows this approach, so there aren't many comments in it. It is just important for me to mention that this is not because I am not documenting my code, but because it is done as I have described. 
