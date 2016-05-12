@@ -1,0 +1,31 @@
+Assumptions:
+1. Double is good enough to store transaction prices without rounding errors.
+2. I completely ignored thread safety, and assumed everything is executed on the same thread
+3. There's no validation that on the stock symbol format (it can be any non-empty string)
+4. Dividend values can also be negative
+5. I did not use any extra libraries (like Sprint) for the development - I wasn't sure what was expected.
+6. I assumed that if the last dividend is 0, the P/E Ratio will also be defined as 0.
+7. To test the "5 minutes ago" trades, I assumed that there is no problem relating to the current time. However, in a production environment, I would probably create some "Time Provider" that I can mock, so the running time of the test would not be a factor.
+
+Running and Testing:
+1. I used Maven to build the project with its standard folder structure.
+2. The tests are implemented using JUnit 4 and EasyMock.
+
+Design:
+1. Main entry point to the system is the StockMarket interface. Using it together with the GCBEAllSharedIndexStockVisitor and VolumeWeightedStockPriceTradeVisitor achieves all the requirements for Phase 1.
+2. However, to simplify the usage of the Stock Market I added SuperSimpleStockMarketFacade that encapsulates all Visitor logic and validation (no need to understand the underlying design).
+3. SuperSimpleStockMarketFacadeTest is the test class that checks the requirement of the app. It does not only test the Facade class, but the entire flow. The other test classes perform lower level unit tests.
+4. I believe it is a better design to have the model (such as Stock or Trade) only expose information, without exposing business logic (such as the required calculations). That is why there are the StockCalculator objects.
+5. I created StockTradeHistory to encapsulate the stock's trading history that might be lazy loaded and have its own operations. Basically, I didn't want the stock to actually hold all its "Trade" objects directly.
+5a. I was on the fence to whether or not make the trading history for a stock completely separate from the stock itself, thus making Stock immutable. I finally decided that for the purpose of Phase 1 keeping them together is good enough.
+6. Because the amount of trading history can be huge and might be stored elsewhere, lazy loaded, or has its own specific data structure, I wanted to hide it from the user of the StockTradeHistory class. That is why I used a visitor.
+7. I separated the "Read Only" interfaces from the "Write" ones, so that users of the Stock Market that only need it for calculations will have a simpler interfaces. This helps make the usage of this interfaces less error prone.
+8. I did not add a removeStock or updateStock methods, since there was no need for it in Phase 1, though those can be easily added to ModifiableStockMarket.
+9. I wanted to have the StockMarket object a singleton. However, I think it is better to use a Factory class (that will still make it singleton) instead. For example, that makes mocking StockMarket easier.
+10. There was no need to update the stock details (other than its trading history), so its properties are all read only and a stock cannot be updated in the StockMarket object.
+11. I wasn't sure if "Fixed Dividend" is only relevant for Preferred stocks, so the property is in the general "Stock" interface. However, if the preferred and common stock have a different model, I would separate it to multiple interface such as "CommonStock" and "PreferredStock" that inherit from "Stock".
+12. I assumed the usage of the calculations is much lower than the number of trades to the stock. Therefore, I haven't cached any of the calculations and they are always performed ad-hoc.
+13. I added the SuperSimpleStockMarketFacade to easily provide all the necessary requirements in the assignment without drilling down to the exact design.
+14. I used a HashMap to hold all the stocks where their symbol is the key, since a common usage is to get a stock by its symbol.
+15. The StockTradeHistory keeps all the trades in a sorted linked list. A linked list because at any given time another trade can be inserted anywhere in the list, and sorted because it's usage is to go over the latest trades. This has a performance hit on each insert, but retrieving the latest trades will only iterate through the relevant entries.
+16. Assuming most trade data is added by order, then the insert operation to the sorted list is O(1) in the average case, since it is added to the head of the list.
